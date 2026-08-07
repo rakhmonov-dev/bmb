@@ -30,11 +30,13 @@ const aiChatLimiter = rateLimit({
 });
 
 /**
- * Login endpoint uchun brute-force himoyasi.
+ * Login endpoint uchun brute-force himoyasi — IP bo'yicha.
+ * 10'dan 5'ga tushirildi, chunki 15 daqiqada 10 urinish hali ham
+ * ko'plab parol kombinatsiyasini sinab ko'rish imkonini beradi.
  */
 const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 10,
+  max: 5,
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true,
@@ -44,4 +46,23 @@ const loginLimiter = rateLimit({
   },
 });
 
-module.exports = { generalLimiter, aiChatLimiter, loginLimiter };
+/**
+ * Email bo'yicha qo'shimcha cheklov — turli IP manzillardan (masalan VPN
+ * yoki botnet orqali) bitta admin hisobiga qaratilgan taqsimlangan
+ * hujumlarni to'xtatadi. Oddiy IP-based limiter buni to'xtata olmaydi,
+ * chunki har bir IP alohida hisoblanadi.
+ */
+const loginByEmailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => (req.body?.email || 'unknown').toLowerCase().trim(),
+  message: {
+    success: false,
+    message: "Bu hisob uchun juda ko'p muvaffaqiyatsiz urinish qilindi. Iltimos, 15 daqiqadan keyin qayta urinib ko'ring.",
+  },
+});
+
+module.exports = { generalLimiter, aiChatLimiter, loginLimiter, loginByEmailLimiter };

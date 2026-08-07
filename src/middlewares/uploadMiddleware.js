@@ -45,5 +45,6 @@ function createUploader(subfolder) {
 
 const uploadTeacherPhoto = createUploader('teachers');
 const uploadTestimonialPhoto = createUploader('testimonials');
+const uploadGalleryImage = createUploader('gallery');
 
-module.exports = { uploadTeacherPhoto, uploadTestimonialPhoto };
+module.exports = { uploadTeacherPhoto, uploadTestimonialPhoto, uploadGalleryImage };

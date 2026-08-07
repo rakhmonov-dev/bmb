@@ -41,6 +41,11 @@ const messageValidator = [
   body('email').optional({ checkFalsy: true }).trim().isEmail(),
 ];
 
+const galleryValidator = [
+  body('caption').optional({ checkFalsy: true }).trim().isLength({ max: 255 }),
+  body('category').optional({ checkFalsy: true }).trim().isLength({ max: 100 }),
+];
+
 const aiChatValidator = [
   body('message').trim().notEmpty().withMessage('Xabar matni bo\'sh bo\'lishi mumkin emas.').isLength({ max: 1000 }),
   body('sessionId').trim().notEmpty().withMessage("Session ID talab qilinadi."),
@@ -57,6 +62,7 @@ module.exports = {
   testimonialValidator,
   faqValidator,
   messageValidator,
+  galleryValidator,
   aiChatValidator,
   aiKnowledgeValidator,
 };

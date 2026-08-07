@@ -10,6 +10,7 @@ const faqRoutes = require('./faqRoutes');
 const messageRoutes = require('./messageRoutes');
 const settingsRoutes = require('./settingsRoutes');
 const aiRoutes = require('./aiRoutes');
+const galleryRoutes = require('./galleryRoutes');
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.use('/faqs', faqRoutes);
 router.use('/messages', messageRoutes);
 router.use('/settings', settingsRoutes);
 router.use('/ai', aiRoutes);
+router.use('/gallery', galleryRoutes);
 
 // GET /api/health — deploy monitoring uchun oddiy health-check
 router.get('/health', (req, res) => {
