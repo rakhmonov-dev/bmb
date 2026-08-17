@@ -9,6 +9,7 @@ const courseValidator = [
     .isIn(['Boshlangich', 'A1', 'A2', 'B1', 'B2', 'C1']).withMessage("Yakuniy daraja noto'g'ri."),
   body('durationMonths').isInt({ min: 1, max: 36 }).withMessage("Davomiylik noto'g'ri."),
   body('priceAmount').isFloat({ min: 0 }).withMessage("Narx noto'g'ri."),
+  body('originalPrice').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage("Asl narx noto'g'ri."),
   body('pricePeriod').optional().isIn(['oylik', 'kurs_uchun']),
   body('lessonsPerWeek').optional().isInt({ min: 1, max: 14 }),
   body('groupSizeMax').optional({ checkFalsy: true }).isInt({ min: 1, max: 50 }),

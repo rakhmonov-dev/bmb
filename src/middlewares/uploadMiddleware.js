@@ -2,10 +2,12 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
+const ALLOWED_GALLERY_MIME_TYPES = [...ALLOWED_IMAGE_MIME_TYPES, ...ALLOWED_VIDEO_MIME_TYPES];
 
 /**
- * Har bir kategoriya (teachers, testimonials) uchun alohida
+ * Har bir kategoriya (teachers, testimonials, gallery) uchun alohida
  * disk storage yaratadi va noyob fayl nomi generatsiya qiladi.
  */
 function createStorage(subfolder) {
@@ -25,26 +27,48 @@ function createStorage(subfolder) {
   });
 }
 
-function fileFilter(req, file, cb) {
-  if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+function imageOnlyFilter(req, file, cb) {
+  if (ALLOWED_IMAGE_MIME_TYPES.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(new Error('Faqat JPEG, PNG yoki WEBP formatidagi rasmlar qabul qilinadi.'));
   }
 }
 
-function createUploader(subfolder) {
+/**
+ * Galereya rasm HAM video qabul qiladi — o'qituvchi/fikr rasmlaridan farqli
+ * o'laroq, chunki foydalanuvchi dars/tadbir videolarini ham yuklashi kerak.
+ */
+function galleryMediaFilter(req, file, cb) {
+  if (ALLOWED_GALLERY_MIME_TYPES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Faqat JPEG, PNG, WEBP rasm yoki MP4, WEBM, MOV video formatlar qabul qilinadi.'));
+  }
+}
+
+function createUploader(subfolder, { fileFilter = imageOnlyFilter, maxSizeMb } = {}) {
   return multer({
     storage: createStorage(subfolder),
     fileFilter,
     limits: {
-      fileSize: (Number(process.env.MAX_UPLOAD_SIZE_MB) || 5) * 1024 * 1024,
+      fileSize: (maxSizeMb || Number(process.env.MAX_UPLOAD_SIZE_MB) || 5) * 1024 * 1024,
     },
   });
 }
 
 const uploadTeacherPhoto = createUploader('teachers');
 const uploadTestimonialPhoto = createUploader('testimonials');
-const uploadGalleryImage = createUploader('gallery');
 
-module.exports = { uploadTeacherPhoto, uploadTestimonialPhoto, uploadGalleryImage };
+// Galereya uchun kattaroq limit (video fayllar rasmlardan ancha katta bo'ladi)
+const uploadGalleryMedia = createUploader('gallery', {
+  fileFilter: galleryMediaFilter,
+  maxSizeMb: Number(process.env.MAX_GALLERY_UPLOAD_SIZE_MB) || 100,
+});
+
+module.exports = {
+  uploadTeacherPhoto,
+  uploadTestimonialPhoto,
+  uploadGalleryMedia,
+  ALLOWED_VIDEO_MIME_TYPES,
+};

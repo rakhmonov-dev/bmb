@@ -13,11 +13,11 @@ async function findById(id) {
   return rows[0] || null;
 }
 
-async function create({ imageUrl, caption = null, category = null, displayOrder = 0 }) {
+async function create({ imageUrl, mediaType = 'image', caption = null, category = null, displayOrder = 0 }) {
   const [result] = await pool.query(
-    `INSERT INTO gallery_images (image_url, caption, category, display_order)
-     VALUES (?, ?, ?, ?)`,
-    [imageUrl, caption, category, displayOrder]
+    `INSERT INTO gallery_images (image_url, media_type, caption, category, display_order)
+     VALUES (?, ?, ?, ?, ?)`,
+    [imageUrl, mediaType, caption, category, displayOrder]
   );
   return findById(result.insertId);
 }
@@ -28,6 +28,7 @@ async function update(id, data) {
 
   const fieldMap = {
     imageUrl: 'image_url',
+    mediaType: 'media_type',
     caption: 'caption',
     category: 'category',
     displayOrder: 'display_order',

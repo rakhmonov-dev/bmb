@@ -23,7 +23,15 @@ function errorHandler(err, req, res, next) {
   } else if (err.name === 'MulterError') {
     statusCode = 400;
     if (err.code === 'LIMIT_FILE_SIZE') {
-      message = `Fayl hajmi juda katta. Maksimal ${process.env.MAX_UPLOAD_SIZE_MB || 5}MB ruxsat etilgan.`;
+      // Galereya endpoint'i video qabul qilgani uchun ancha kattaroq limitga
+      // ega (100MB) — xato xabari qaysi endpoint chaqirilganiga qarab to'g'ri
+      // limitni ko'rsatishi kerak, aks holda foydalanuvchi "5MB" deb noto'g'ri
+      // xabar oladi, aslida 100MB limit bo'lsa ham.
+      const isGalleryUpload = req.originalUrl.includes('/gallery');
+      const maxSize = isGalleryUpload
+        ? (process.env.MAX_GALLERY_UPLOAD_SIZE_MB || 100)
+        : (process.env.MAX_UPLOAD_SIZE_MB || 5);
+      message = `Fayl hajmi juda katta. Maksimal ${maxSize}MB ruxsat etilgan.`;
     } else {
       message = 'Fayl yuklashda xatolik yuz berdi.';
     }
