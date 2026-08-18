@@ -1,31 +1,16 @@
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 
 const ALLOWED_IMAGE_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const ALLOWED_VIDEO_MIME_TYPES = ['video/mp4', 'video/webm', 'video/quicktime'];
 const ALLOWED_GALLERY_MIME_TYPES = [...ALLOWED_IMAGE_MIME_TYPES, ...ALLOWED_VIDEO_MIME_TYPES];
 
 /**
- * Har bir kategoriya (teachers, testimonials, gallery) uchun alohida
- * disk storage yaratadi va noyob fayl nomi generatsiya qiladi.
+ * Fayllar diskka emas, xotiraga (RAM'ga, req.file.buffer sifatida)
+ * qabul qilinadi — chunki Render kabi platformalarda disk doimiy emas.
+ * Bufer keyin controller'da to'g'ridan-to'g'ri R2'ga yuboriladi
+ * (config/r2.js), diskka umuman yozilmaydi.
  */
-function createStorage(subfolder) {
-  const uploadPath = path.join(__dirname, '..', '..', 'uploads', subfolder);
-
-  if (!fs.existsSync(uploadPath)) {
-    fs.mkdirSync(uploadPath, { recursive: true });
-  }
-
-  return multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadPath),
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase();
-      const uniqueName = `${subfolder}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-      cb(null, uniqueName);
-    },
-  });
-}
+const memoryStorage = multer.memoryStorage();
 
 function imageOnlyFilter(req, file, cb) {
   if (ALLOWED_IMAGE_MIME_TYPES.includes(file.mimetype)) {
@@ -47,9 +32,9 @@ function galleryMediaFilter(req, file, cb) {
   }
 }
 
-function createUploader(subfolder, { fileFilter = imageOnlyFilter, maxSizeMb } = {}) {
+function createUploader({ fileFilter = imageOnlyFilter, maxSizeMb } = {}) {
   return multer({
-    storage: createStorage(subfolder),
+    storage: memoryStorage,
     fileFilter,
     limits: {
       fileSize: (maxSizeMb || Number(process.env.MAX_UPLOAD_SIZE_MB) || 5) * 1024 * 1024,
@@ -57,11 +42,11 @@ function createUploader(subfolder, { fileFilter = imageOnlyFilter, maxSizeMb } =
   });
 }
 
-const uploadTeacherPhoto = createUploader('teachers');
-const uploadTestimonialPhoto = createUploader('testimonials');
+const uploadTeacherPhoto = createUploader();
+const uploadTestimonialPhoto = createUploader();
 
 // Galereya uchun kattaroq limit (video fayllar rasmlardan ancha katta bo'ladi)
-const uploadGalleryMedia = createUploader('gallery', {
+const uploadGalleryMedia = createUploader({
   fileFilter: galleryMediaFilter,
   maxSizeMb: Number(process.env.MAX_GALLERY_UPLOAD_SIZE_MB) || 100,
 });

@@ -1,10 +1,9 @@
 const galleryService = require('../services/galleryService');
 const asyncHandler = require('../utils/asyncHandler');
 const { ALLOWED_VIDEO_MIME_TYPES } = require('../middlewares/uploadMiddleware');
+const { uploadBufferToR2 } = require('../config/r2');
 
-function buildMediaUrl(req, filename) {
-  return `${req.protocol}://${req.get('host')}/uploads/gallery/${filename}`;
-}
+const R2_FOLDER = 'bmg-school/gallery';
 
 /**
  * Multer orqali kelgan faylning mimetype'iga qarab "image" yoki "video"
@@ -30,8 +29,10 @@ const create = asyncHandler(async (req, res) => {
     return res.status(400).json({ success: false, message: 'Rasm yoki video fayli yuklanishi shart.' });
   }
 
+  const { url } = await uploadBufferToR2(req.file.buffer, R2_FOLDER, req.file.mimetype, req.file.originalname);
+
   const image = await galleryService.create({
-    imageUrl: buildMediaUrl(req, req.file.filename),
+    imageUrl: url,
     mediaType: detectMediaType(req.file),
     caption: req.body.caption || null,
     category: req.body.category || null,
@@ -45,7 +46,8 @@ const update = asyncHandler(async (req, res) => {
   const updateData = { ...req.body };
 
   if (req.file) {
-    updateData.imageUrl = buildMediaUrl(req, req.file.filename);
+    const { url } = await uploadBufferToR2(req.file.buffer, R2_FOLDER, req.file.mimetype, req.file.originalname);
+    updateData.imageUrl = url;
     updateData.mediaType = detectMediaType(req.file);
   }
   if (updateData.displayOrder !== undefined) updateData.displayOrder = Number(updateData.displayOrder);

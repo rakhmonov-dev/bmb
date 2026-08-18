@@ -1,9 +1,8 @@
 const testimonialService = require('../services/testimonialService');
 const asyncHandler = require('../utils/asyncHandler');
+const { uploadBufferToR2, deleteFromR2 } = require('../config/r2');
 
-function buildPhotoUrl(req, filename) {
-  return `${req.protocol}://${req.get('host')}/uploads/testimonials/${filename}`;
-}
+const R2_FOLDER = 'bmg-school/testimonials';
 
 const getAllPublic = asyncHandler(async (req, res) => {
   const testimonials = await testimonialService.getAll(false);
@@ -16,7 +15,9 @@ const getAllAdmin = asyncHandler(async (req, res) => {
 });
 
 const create = asyncHandler(async (req, res) => {
-  const photoUrl = req.file ? buildPhotoUrl(req, req.file.filename) : null;
+  const photoUrl = req.file
+    ? (await uploadBufferToR2(req.file.buffer, R2_FOLDER, req.file.mimetype, req.file.originalname)).url
+    : null;
 
   const testimonial = await testimonialService.create({
     fullName: req.body.fullName,
@@ -34,7 +35,10 @@ const update = asyncHandler(async (req, res) => {
   const updateData = { ...req.body };
 
   if (req.file) {
-    updateData.photoUrl = buildPhotoUrl(req, req.file.filename);
+    const existing = await testimonialService.getById(req.params.id);
+    const { url } = await uploadBufferToR2(req.file.buffer, R2_FOLDER, req.file.mimetype, req.file.originalname);
+    updateData.photoUrl = url;
+    if (existing.photo_url) deleteFromR2(existing.photo_url);
   }
   if (updateData.rating !== undefined) updateData.rating = Number(updateData.rating);
   if (updateData.displayOrder !== undefined) updateData.displayOrder = Number(updateData.displayOrder);
@@ -47,7 +51,9 @@ const update = asyncHandler(async (req, res) => {
 });
 
 const remove = asyncHandler(async (req, res) => {
+  const existing = await testimonialService.getById(req.params.id);
   await testimonialService.remove(req.params.id);
+  if (existing.photo_url) deleteFromR2(existing.photo_url);
   res.status(200).json({ success: true, message: "Fikr o'chirildi." });
 });
 

@@ -1,6 +1,5 @@
-const fs = require('fs');
-const path = require('path');
 const galleryRepository = require('../repositories/galleryRepository');
+const { deleteFromR2 } = require('../config/r2');
 
 class NotFoundError extends Error {
   constructor(message) {
@@ -25,15 +24,14 @@ async function create(data) {
 }
 
 /**
- * Yangi rasm bilan almashtirilganda, eski jismoniy faylni diskdan
- * o'chiradi — aks holda uploads/gallery papkasi ishlatilmayotgan
- * fayllarga to'lib qoladi.
+ * Yangi rasm bilan almashtirilganda, eski faylni R2'dan o'chiradi —
+ * aks holda bepul tarif kvotasi ishlatilmayotgan fayllarga to'lib qoladi.
  */
 async function update(id, data) {
   const existing = await getById(id);
 
   if (data.imageUrl && data.imageUrl !== existing.image_url) {
-    deletePhysicalFile(existing.image_url);
+    deleteFromR2(existing.image_url);
   }
 
   return galleryRepository.update(id, data);
@@ -41,31 +39,8 @@ async function update(id, data) {
 
 async function remove(id) {
   const existing = await getById(id);
-  deletePhysicalFile(existing.image_url);
+  deleteFromR2(existing.image_url);
   return galleryRepository.remove(id);
-}
-
-/**
- * image_url to'liq URL (masalan https://api.../uploads/gallery/xxx.jpg)
- * shaklida saqlanadi; bu yerdan haqiqiy disk yo'lini ajratib olamiz.
- * URL formati noto'g'ri bo'lsa yoki fayl allaqachon yo'q bo'lsa, xato
- * tashlamaymiz — bu ma'lumot yo'qolishiga olib kelmasligi kerak,
- * shunchaki diskda "yetim" fayl qoladi, bu kritik emas.
- */
-function deletePhysicalFile(imageUrl) {
-  try {
-    const urlParts = imageUrl.split('/uploads/');
-    if (urlParts.length < 2) return;
-
-    const relativePath = urlParts[1]; // masalan "gallery/gallery-123.jpg"
-    const filePath = path.join(__dirname, '..', '..', 'uploads', relativePath);
-
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch (error) {
-    console.error('⚠️  Galereya faylini o\'chirishda xatolik (e\'tiborsiz qoldirildi):', error.message);
-  }
 }
 
 module.exports = { getAll, getById, create, update, remove, NotFoundError };
