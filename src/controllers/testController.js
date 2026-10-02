@@ -5,13 +5,13 @@ const asyncHandler = require('../utils/asyncHandler');
 // ---------------------- PUBLIC: Darajani aniqlash testi ----------------------
 
 const getQuestions = asyncHandler(async (req, res) => {
-  const questions = await testService.getPublicQuestions();
+  const questions = await testService.getPublicQuestions(req.query.subject);
   res.status(200).json({ success: true, data: questions });
 });
 
 const submitTest = asyncHandler(async (req, res) => {
   const ipAddress = req.ip || req.headers['x-forwarded-for'] || null;
-  const result = await testService.submitTest(req.body.answers, ipAddress);
+  const result = await testService.submitTest(req.body.answers, ipAddress, req.body.subject);
   res.status(200).json({ success: true, data: result });
 });
 

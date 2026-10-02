@@ -32,7 +32,7 @@ const createApplicationValidator = [
     .isInt({ min: 0 }),
   body('determinedLevel')
     .optional({ checkFalsy: true })
-    .isIn(['Boshlangich', 'A1', 'A2', 'B1', 'B2', 'C1']),
+    .isIn(['Boshlangich', 'A1', 'A2', 'B1', 'B2', 'C1', '5-sinfgacha', '5-sinf', '6-sinf', '7-sinf', '8-sinf', '9-sinf', '10-sinf', '11-sinf']),
   body('comment')
     .optional({ checkFalsy: true })
     .trim()
