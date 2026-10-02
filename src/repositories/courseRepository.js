@@ -13,17 +13,24 @@ async function findAll({ includeInactive = false } = {}) {
   const query = includeInactive
     ? `${BASE_SELECT} ORDER BY c.display_order ASC, c.id ASC`
     : `${BASE_SELECT} WHERE c.is_active = 1 ORDER BY c.display_order ASC, c.id ASC`;
+
   const [rows] = await pool.query(query);
   return rows;
 }
 
 async function findById(id) {
-  const [rows] = await pool.query(`${BASE_SELECT} WHERE c.id = ? LIMIT 1`, [id]);
+  const [rows] = await pool.query(
+    `${BASE_SELECT} WHERE c.id = ? LIMIT 1`,
+    [id]
+  );
   return rows[0] || null;
 }
 
 async function findBySlug(slug) {
-  const [rows] = await pool.query(`${BASE_SELECT} WHERE c.slug = ? AND c.is_active = 1 LIMIT 1`, [slug]);
+  const [rows] = await pool.query(
+    `${BASE_SELECT} WHERE c.slug = ? AND c.is_active = 1 LIMIT 1`,
+    [slug]
+  );
   return rows[0] || null;
 }
 
@@ -31,7 +38,9 @@ async function slugExists(slug, excludeId = null) {
   const query = excludeId
     ? 'SELECT id FROM courses WHERE slug = ? AND id != ? LIMIT 1'
     : 'SELECT id FROM courses WHERE slug = ? LIMIT 1';
+
   const params = excludeId ? [slug, excludeId] : [slug];
+
   const [rows] = await pool.query(query, params);
   return rows.length > 0;
 }
@@ -41,10 +50,15 @@ async function create(data) {
     title,
     slug,
     description,
-    cefrLevelFrom,
-    cefrLevelTo,
+
+    cefrLevelFrom = null,
+    cefrLevelTo = null,
+
     subject = 'english',
-    gradeRange = null,
+
+    gradeFrom = null,
+    gradeTo = null,
+
     durationMonths,
     lessonsPerWeek = 3,
     priceAmount,
@@ -58,16 +72,47 @@ async function create(data) {
 
   const [result] = await pool.query(
     `INSERT INTO courses
-      (title, slug, description, cefr_level_from, cefr_level_to, subject, grade_range, duration_months,
-       lessons_per_week, price_amount, original_price, price_period, group_size_max, icon_name,
-       teacher_id, display_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (
+        title,
+        slug,
+        description,
+        cefr_level_from,
+        cefr_level_to,
+        subject,
+        grade_from,
+        grade_to,
+        duration_months,
+        lessons_per_week,
+        price_amount,
+        original_price,
+        price_period,
+        group_size_max,
+        icon_name,
+        teacher_id,
+        display_order
+      )
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      title, slug, description, cefrLevelFrom, cefrLevelTo, subject, gradeRange, durationMonths,
-      lessonsPerWeek, priceAmount, originalPrice, pricePeriod, groupSizeMax, iconName,
-      teacherId, displayOrder,
+      title,
+      slug,
+      description,
+      cefrLevelFrom,
+      cefrLevelTo,
+      subject,
+      gradeFrom,
+      gradeTo,
+      durationMonths,
+      lessonsPerWeek,
+      priceAmount,
+      originalPrice,
+      pricePeriod,
+      groupSizeMax,
+      iconName,
+      teacherId,
+      displayOrder,
     ]
   );
+
   return findById(result.insertId);
 }
 
@@ -79,10 +124,15 @@ async function update(id, data) {
     title: 'title',
     slug: 'slug',
     description: 'description',
+
     cefrLevelFrom: 'cefr_level_from',
     cefrLevelTo: 'cefr_level_to',
+
     subject: 'subject',
-    gradeRange: 'grade_range',
+
+    gradeFrom: 'grade_from',
+    gradeTo: 'grade_to',
+
     durationMonths: 'duration_months',
     lessonsPerWeek: 'lessons_per_week',
     priceAmount: 'price_amount',
@@ -102,16 +152,35 @@ async function update(id, data) {
     }
   }
 
-  if (fields.length === 0) return findById(id);
+  if (fields.length === 0) {
+    return findById(id);
+  }
 
   values.push(id);
-  await pool.query(`UPDATE courses SET ${fields.join(', ')} WHERE id = ?`, values);
+
+  await pool.query(
+    `UPDATE courses SET ${fields.join(', ')} WHERE id = ?`,
+    values
+  );
+
   return findById(id);
 }
 
 async function remove(id) {
-  const [result] = await pool.query('DELETE FROM courses WHERE id = ?', [id]);
+  const [result] = await pool.query(
+    'DELETE FROM courses WHERE id = ?',
+    [id]
+  );
+
   return result.affectedRows > 0;
 }
 
-module.exports = { findAll, findById, findBySlug, slugExists, create, update, remove };
+module.exports = {
+  findAll,
+  findById,
+  findBySlug,
+  slugExists,
+  create,
+  update,
+  remove,
+};
