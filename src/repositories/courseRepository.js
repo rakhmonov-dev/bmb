@@ -43,6 +43,8 @@ async function create(data) {
     description,
     cefrLevelFrom,
     cefrLevelTo,
+    subject = 'english',
+    gradeRange = null,
     durationMonths,
     lessonsPerWeek = 3,
     priceAmount,
@@ -56,12 +58,12 @@ async function create(data) {
 
   const [result] = await pool.query(
     `INSERT INTO courses
-      (title, slug, description, cefr_level_from, cefr_level_to, duration_months,
+      (title, slug, description, cefr_level_from, cefr_level_to, subject, grade_range, duration_months,
        lessons_per_week, price_amount, original_price, price_period, group_size_max, icon_name,
        teacher_id, display_order)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      title, slug, description, cefrLevelFrom, cefrLevelTo, durationMonths,
+      title, slug, description, cefrLevelFrom, cefrLevelTo, subject, gradeRange, durationMonths,
       lessonsPerWeek, priceAmount, originalPrice, pricePeriod, groupSizeMax, iconName,
       teacherId, displayOrder,
     ]
@@ -79,6 +81,8 @@ async function update(id, data) {
     description: 'description',
     cefrLevelFrom: 'cefr_level_from',
     cefrLevelTo: 'cefr_level_to',
+    subject: 'subject',
+    gradeRange: 'grade_range',
     durationMonths: 'duration_months',
     lessonsPerWeek: 'lessons_per_week',
     priceAmount: 'price_amount',

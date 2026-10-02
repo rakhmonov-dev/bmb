@@ -3,6 +3,8 @@ const { body } = require('express-validator');
 const courseValidator = [
   body('title').trim().notEmpty().withMessage('Kurs nomi kiritilishi shart.'),
   body('description').trim().notEmpty().withMessage('Tavsif kiritilishi shart.'),
+  body('subject').optional().isIn(['english', 'math']).withMessage("Fan noto'g'ri."),
+  body('gradeRange').optional({ checkFalsy: true }).isIn(['5-7', '8-9', '10-11']).withMessage("Sinf oralig'i noto'g'ri."),
   body('cefrLevelFrom')
     .isIn(['Boshlangich', 'A1', 'A2', 'B1', 'B2', 'C1']).withMessage("Boshlang'ich daraja noto'g'ri."),
   body('cefrLevelTo')
